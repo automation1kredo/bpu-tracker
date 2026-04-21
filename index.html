@@ -191,24 +191,37 @@
     </div>
   </div>
 
-  <!-- Person view — list -->
+  <!-- Person view — two column list -->
   <div id="personView" style="display:none;">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:36px;">#</th>
-            <th>Name</th>
-            <th style="width:120px;text-align:center;">Pending</th>
-            <th style="width:120px;text-align:center;">In progress</th>
-            <th style="width:120px;text-align:center;">Completed</th>
-            <th style="width:100px;text-align:center;">Total</th>
-          </tr>
-        </thead>
-        <tbody id="summaryBody">
-          <tr><td colspan="6" class="empty-row">Loading...</td></tr>
-        </tbody>
-      </table>
+    <div id="personListWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px;">#</th>
+              <th>Name</th>
+              <th style="width:80px;text-align:center;">Pending</th>
+              <th style="width:80px;text-align:center;">In prog</th>
+              <th style="width:80px;text-align:center;">Done</th>
+            </tr>
+          </thead>
+          <tbody id="personCol1"></tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px;">#</th>
+              <th>Name</th>
+              <th style="width:80px;text-align:center;">Pending</th>
+              <th style="width:80px;text-align:center;">In prog</th>
+              <th style="width:80px;text-align:center;">Done</th>
+            </tr>
+          </thead>
+          <tbody id="personCol2"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -517,18 +530,27 @@ function renderSummaryView() {
     return 0;
   });
 
-  document.getElementById('summaryBody').innerHTML = names.map((name, i) => {
+  function makeRow(name, i) {
     const p = people[name];
-    const total = p.pending + p.progress + p.done;
     return `<tr style="cursor:pointer;" onclick="drillPerson('${name.replace(/'/g,"\\'")}')">
       <td style="color:#bbb;font-size:12px;">${i+1}</td>
-      <td style="font-weight:600;color:#111;">${name}</td>
-      <td style="text-align:center;font-weight:700;color:${p.pending>0?'#111':'#aaa'};">${p.pending}</td>
-      <td style="text-align:center;font-weight:700;color:${p.progress>0?'#111':'#aaa'};">${p.progress}</td>
-      <td style="text-align:center;font-weight:700;color:${p.done>0?'#111':'#aaa'};">${p.done}</td>
-      <td style="text-align:center;font-weight:700;color:#111;">${total}</td>
+      <td style="font-weight:600;color:#111;font-size:13px;">${name}</td>
+      <td style="text-align:center;font-weight:700;color:${p.pending>0?'#111':'#bbb'};">${p.pending}</td>
+      <td style="text-align:center;font-weight:700;color:${p.progress>0?'#111':'#bbb'};">${p.progress}</td>
+      <td style="text-align:center;font-weight:700;color:${p.done>0?'#111':'#bbb'};">${p.done}</td>
     </tr>`;
-  }).join('');
+  }
+
+  const col1 = names.slice(0, 20);
+  const col2 = names.slice(20, 40);
+
+  document.getElementById('personCol1').innerHTML = col1.length
+    ? col1.map((n,i) => makeRow(n, i)).join('')
+    : `<tr><td colspan="5" class="empty-row">No data</td></tr>`;
+
+  document.getElementById('personCol2').innerHTML = col2.length
+    ? col2.map((n,i) => makeRow(n, i+20)).join('')
+    : `<tr><td colspan="5" style="padding:12px;color:#ddd;text-align:center;">—</td></tr>`;
 }
 
 function switchView(n) {
