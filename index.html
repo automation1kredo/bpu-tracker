@@ -177,6 +177,7 @@
             <th>Task</th>
             <th style="width:110px;">Status</th>
             <th class="hide-mobile" style="width:120px;">Deadline</th>
+            <th class="hide-mobile" style="width:80px;">Source</th>
             <th class="hide-mobile" style="width:90px;">Priority</th>
           </tr>
         </thead>
@@ -398,6 +399,7 @@ function renderTable() {
     <td><div class="task-name">${t.task}</div></td>
     <td>${statusBadge(t.status)}</td>
     <td class="hide-mobile" style="font-size:12px;color:#555;">${t.deadline}</td>
+    <td class="hide-mobile" style="font-size:12px;"><span class="badge ${t.source==='Client'?'badge-progress':'badge-medium'}">${t.source||'—'}</span></td>
     <td class="hide-mobile">${priorityBadge(t.priority)}</td>
   </tr>`).join('');
 
@@ -449,9 +451,15 @@ function renderPersonView() {
 
   const names = Object.keys(people).sort((a,b) => {
     const ta = people[a], tb = people[b];
-    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
+    const aActive = ta.progress + ta.pending;
+    const bActive = tb.progress + tb.pending;
+    if (aActive === 0 && bActive > 0) return 1;
+    if (bActive === 0 && aActive > 0) return -1;
     if (tb.pending !== ta.pending) return tb.pending - ta.pending;
-    return (tb.pending+tb.progress+tb.done) - (ta.pending+ta.progress+ta.done);
+    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
+    const aTotal = ta.progress + ta.pending + ta.done;
+    const bTotal = tb.progress + tb.pending + tb.done;
+    return bTotal - aTotal;
   });
 
   const maxTotal = Math.max(...names.map(n => people[n].pending+people[n].progress+people[n].done));
@@ -525,9 +533,19 @@ function renderSummaryView() {
 
   const names = Object.keys(people).sort((a,b) => {
     const ta = people[a], tb = people[b];
-    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
+    const aActive = ta.progress + ta.pending;
+    const bActive = tb.progress + tb.pending;
+    // Completed-only people go to bottom
+    if (aActive === 0 && bActive > 0) return 1;
+    if (bActive === 0 && aActive > 0) return -1;
+    // Among active — Pending first descending
     if (tb.pending !== ta.pending) return tb.pending - ta.pending;
-    return 0;
+    // Then In progress descending
+    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
+    // Then total descending
+    const aTotal = ta.progress + ta.pending + ta.done;
+    const bTotal = tb.progress + tb.pending + tb.done;
+    return bTotal - aTotal;
   });
 
   function makeRow(name, i) {
