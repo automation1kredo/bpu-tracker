@@ -149,11 +149,7 @@
   <div class="view-tabs">
     <button class="vtab active" id="vtab1" onclick="switchView(1)">Task view</button>
     <button class="vtab" id="vtab2" onclick="switchView(2)">Person view</button>
-    <button class="vtab" id="vtab3" onclick="switchView(3)">Summary view</button>
   </div>
-
-  <!-- Task view -->
-
 
   <!-- Task view -->
   <div id="taskView">
@@ -227,13 +223,6 @@
           <tbody id="personCol2"></tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <!-- Summary view — cards -->
-  <div id="summaryView" style="display:none;">
-    <div class="person-grid" id="personGrid">
-      <div style="text-align:center;padding:32px;color:#aaa;grid-column:1/-1;">Loading...</div>
     </div>
   </div>
 
@@ -611,14 +600,11 @@ function goPersonPage(p) {
 }
 
 function switchView(n) {
-  document.getElementById('taskView').style.display    = n===1 ? 'block' : 'none';
-  document.getElementById('personView').style.display  = n===2 ? 'block' : 'none';
-  document.getElementById('summaryView').style.display = n===3 ? 'block' : 'none';
+  document.getElementById('taskView').style.display   = n===1 ? 'block' : 'none';
+  document.getElementById('personView').style.display = n===2 ? 'block' : 'none';
   document.getElementById('vtab1').className = 'vtab' + (n===1?' active':'');
   document.getElementById('vtab2').className = 'vtab' + (n===2?' active':'');
-  document.getElementById('vtab3').className = 'vtab' + (n===3?' active':'');
   if (n===2) renderSummaryView();
-  if (n===3) renderPersonView();
 }
 
 loadData();
