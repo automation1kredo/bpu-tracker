@@ -336,10 +336,12 @@ function updateCounts() {
 }
 
 function updatePersonFilter() {
-  const people = [...new Set(allTasks.map(t=>t.assigned_to))].sort();
+  const people = [...new Set(allTasks.map(t=>t.assigned_to))]
+    .filter(p => p && p !== '—' && p !== '-' && p.trim() !== '')
+    .sort();
   const sel = document.getElementById('personFilter');
   const cur = sel.value;
-  sel.innerHTML = '<option value="all">All people</option>';
+  sel.innerHTML = '<option value="all">All people</option><option value="—">— Unassigned</option>';
   people.forEach(p => {
     const o = document.createElement('option');
     o.value=p; o.textContent=p;
@@ -361,13 +363,20 @@ function applyFilters() {
   const person = document.getElementById('personFilter').value;
   filteredTasks = allTasks.filter(t => {
     const sm = activeStatus==='all' || t.status===activeStatus;
-    const pm = person==='all' || t.assigned_to===person;
+    let pm;
+    if (person === 'all') {
+      pm = true;
+    } else if (person === '—') {
+      pm = !t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '';
+    } else {
+      pm = t.assigned_to === person;
+    }
     return sm && pm;
   });
   currentPage = 1;
   renderTable();
   const label = activeStatus==='all' ? 'all tasks' : activeStatus.toLowerCase() + ' tasks';
-  const personLabel = person==='all' ? '' : ` for ${person}`;
+  const personLabel = person==='all' ? '' : person === '—' ? ' — unassigned' : ` for ${person}`;
   document.getElementById('filterInfo').textContent = `Showing ${filteredTasks.length} ${label}${personLabel}`;
 }
 
@@ -386,15 +395,21 @@ function renderTable() {
     return;
   }
 
-  tbody.innerHTML = page.map((t, i) => `<tr>
+  tbody.innerHTML = page.map((t, i) => {
+    const isUnassigned = !t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '';
+    const assignedDisplay = isUnassigned
+      ? `<span style="color:#ccc;font-size:13px;">—</span>`
+      : `<span style="font-size:12px;color:#444;font-weight:600;">${t.assigned_to}</span>`;
+    return `<tr>
     <td style="color:#bbb;font-size:12px;">${start+i+1}</td>
-    <td style="font-size:12px;color:#444;font-weight:600;">${t.assigned_to}</td>
+    <td>${assignedDisplay}</td>
     <td><div class="task-name">${t.task}</div></td>
     <td>${statusBadge(t.status)}</td>
     <td class="hide-mobile" style="font-size:12px;color:#555;">${t.deadline}</td>
     <td class="hide-mobile" style="font-size:12px;"><span class="badge ${t.source==='Client'?'badge-progress':'badge-medium'}">${t.source||'—'}</span></td>
     <td class="hide-mobile">${priorityBadge(t.priority)}</td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 
   renderPagination(totalPages);
 }
@@ -434,6 +449,7 @@ function goPage(p) {
 function renderPersonView() {
   const people = {};
   allTasks.forEach(t => {
+    if (!t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '') return;
     if (!people[t.assigned_to]) people[t.assigned_to] = { pending:0, progress:0, done:0, tasks:[] };
     const p = people[t.assigned_to];
     if (t.status==='Pending') p.pending++;
@@ -520,6 +536,7 @@ const PERSON_PAGE_SIZE = 40; // 20 per column
 function renderSummaryView() {
   const people = {};
   allTasks.forEach(t => {
+    if (!t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '') return;
     if (!people[t.assigned_to]) people[t.assigned_to] = { pending:0, progress:0, done:0 };
     const p = people[t.assigned_to];
     if (t.status==='Pending') p.pending++;
