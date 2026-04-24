@@ -296,12 +296,12 @@ async function loadData() {
     allTasks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
       task:        (r[0]||'').trim(),
       assigned_to: (r[1]||'').trim(),
-      status:      normalizeStatus(r[2]),
-      deadline:    (r[3]||'—').trim(),
-      priority:    (r[4]||'Medium').trim(),
-      source:      (r[5]||'').trim(),
-      updated:     (r[6]||'').trim(),
-      assigned_by: (r[7]||'').trim()
+      assigned_by: (r[2]||'').trim(),
+      status:      normalizeStatus(r[3]),
+      deadline:    (r[4]||'—').trim(),
+      priority:    (r[5]||'Medium').trim(),
+      source:      (r[6]||'').trim(),
+      updated:     (r[7]||'').trim()
     }));
 
     updateCounts();
@@ -589,23 +589,24 @@ function renderSummaryView() {
   function makeRow(name, i) {
     const p = people[name];
     return `<tr style="cursor:pointer;" onclick="drillPerson('${name.replace(/'/g,"\\'")}')">
-      <td style="color:#bbb;font-size:12px;">${i+1}</td>
-      <td style="font-weight:600;color:#111;font-size:13px;">${name}</td>
-      <td style="text-align:center;font-weight:700;color:${p.pending>0?'#111':'#bbb'};">${p.pending}</td>
-      <td style="text-align:center;font-weight:700;color:${p.progress>0?'#111':'#bbb'};">${p.progress}</td>
-      <td style="text-align:center;font-weight:700;color:${p.done>0?'#111':'#bbb'};">${p.done}</td>
+      <td style="color:#8a96b8;font-size:12px;">${i+1}</td>
+      <td style="font-weight:600;color:#0a1f5c;font-size:13px;">${name}</td>
+      <td style="text-align:center;font-weight:700;color:${p.pending>0?'#0a1f5c':'#c8d0e8'};">${p.pending}</td>
+      <td style="text-align:center;font-weight:700;color:${p.progress>0?'#0a1f5c':'#c8d0e8'};">${p.progress}</td>
+      <td style="text-align:center;font-weight:700;color:${p.done>0?'#1a6e3c':'#c8d0e8'};">${p.done}</td>
     </tr>`;
   }
 
-  const col1 = pageNames.slice(0, 20);
-  const col2 = pageNames.slice(20, 40);
+  const mid = Math.ceil(pageNames.length / 2);
+  const col1 = pageNames.slice(0, mid);
+  const col2 = pageNames.slice(mid);
 
   document.getElementById('personCol1').innerHTML = col1.length
     ? col1.map((n,i) => makeRow(n, start+i)).join('')
     : `<tr><td colspan="5" class="empty-row">No data</td></tr>`;
 
   document.getElementById('personCol2').innerHTML = col2.length
-    ? col2.map((n,i) => makeRow(n, start+i+20)).join('')
+    ? col2.map((n,i) => makeRow(n, start+i+mid)).join('')
     : `<tr><td colspan="5" style="padding:12px;color:#ddd;text-align:center;">—</td></tr>`;
 
   // Pagination controls
