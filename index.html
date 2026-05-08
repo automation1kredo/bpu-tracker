@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BPU &amp; Co — Work Tracker</title>
+<title>BPU & Co — Work Tracker</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -57,7 +57,7 @@
   select:focus { outline: none; border-color: var(--navy); }
 
   /* Table */
-  .table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th { background: var(--navy); color: #fff; padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; }
   tbody td { padding: 11px 14px; border-bottom: 1px solid var(--navy-pale); color: var(--text); vertical-align: middle; }
@@ -72,6 +72,22 @@
   .badge-high { background: var(--navy-dark); color: #fff; border-color: var(--navy-dark); }
   .badge-medium { background: var(--navy-light); color: var(--navy-mid); border-color: var(--border); }
   .badge-low { background: var(--navy-pale); color: var(--text-muted); border-color: var(--border); }
+
+  /* NEW: Date and Email column styling */
+  .col-date { 
+    text-align: center; 
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  
+  .col-email { 
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #666;
+    word-break: break-all;
+    background-color: #fafbfc;
+  }
 
   /* Pagination */
   .pagination { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--white); border-top: 1px solid var(--navy-pale); font-size: 12px; color: var(--text-muted); }
@@ -132,7 +148,7 @@
 
   <div class="header">
     <div>
-      <h1>BPU &amp; Co — Work Tracker</h1>
+      <h1>BPU & Co — Work Tracker</h1>
       <p id="lastUpdated">Loading...</p>
     </div>
     <div class="header-right">
@@ -190,12 +206,14 @@
             <th>Task</th>
             <th style="width:110px;">Status</th>
             <th class="hide-mobile" style="width:120px;">Deadline</th>
+            <th style="width:100px;">Date</th>
+            <th class="hide-mobile" style="width:200px;">Sender Email</th>
             <th class="hide-mobile" style="width:80px;">Source</th>
             <th class="hide-mobile" style="width:90px;">Priority</th>
           </tr>
         </thead>
         <tbody id="taskBody">
-          <tr><td colspan="6" class="empty-row">Loading tasks...</td></tr>
+          <tr><td colspan="10" class="empty-row">Loading tasks...</td></tr>
         </tbody>
       </table>
       <div class="pagination" id="pagination" style="display:none;">
@@ -294,14 +312,16 @@ async function loadData() {
     if (rows.length < 2) { showError('No tasks found in sheet yet.'); return; }
 
     allTasks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
-      task:        (r[0]||'').trim(),
-      assigned_to: (r[1]||'').trim(),
-      assigned_by: (r[2]||'').trim(),
-      status:      normalizeStatus(r[3]),
-      deadline:    (r[4]||'—').trim(),
-      priority:    (r[5]||'Medium').trim(),
-      source:      (r[6]||'').trim(),
-      updated:     (r[7]||'').trim()
+      task:         (r[0]||'').trim(),
+      assigned_to:  (r[1]||'').trim(),
+      assigned_by:  (r[2]||'').trim(),
+      status:       normalizeStatus(r[3]),
+      deadline:     (r[4]||'—').trim(),
+      priority:     (r[5]||'Medium').trim(),
+      source:       (r[6]||'').trim(),
+      updated:      (r[7]||'').trim(),
+      date:         (r[8]||'').trim(),           // NEW: Column I
+      sender_email: (r[9]||'').trim()            // NEW: Column J
     }));
 
     updateCounts();
@@ -396,6 +416,7 @@ function applyFilters() {
   const personLabel = person==='all' ? '' : person === '—' ? ' — unassigned' : ` for ${person}`;
   document.getElementById('filterInfo').textContent = `Showing ${filteredTasks.length} ${label}${personLabel}`;
 }
+
 function renderTable() {
   const tbody = document.getElementById('taskBody');
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / PAGE_SIZE));
@@ -406,7 +427,7 @@ function renderTable() {
   const page = filteredTasks.slice(start, end);
 
   if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty-row">No tasks match this filter</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-row">No tasks match this filter</td></tr>`;
     document.getElementById('pagination').style.display = 'none';
     return;
   }
@@ -426,6 +447,8 @@ function renderTable() {
     <td><div class="task-name">${t.task}</div></td>
     <td>${statusBadge(t.status)}</td>
     <td class="hide-mobile" style="font-size:12px;color:#555;">${t.deadline}</td>
+    <td class="col-date">${t.date||'—'}</td>
+    <td class="hide-mobile col-email" title="${t.sender_email}">${t.sender_email||'—'}</td>
     <td class="hide-mobile" style="font-size:12px;"><span class="badge ${t.source==='Client'?'badge-progress':'badge-medium'}">${t.source||'—'}</span></td>
     <td class="hide-mobile">${priorityBadge(t.priority)}</td>
   </tr>`;
@@ -575,14 +598,10 @@ function renderSummaryView() {
     const ta = people[a], tb = people[b];
     const aActive = ta.progress + ta.pending;
     const bActive = tb.progress + tb.pending;
-    // Completed-only people go to bottom
     if (aActive === 0 && bActive > 0) return 1;
     if (bActive === 0 && aActive > 0) return -1;
-    // Among active — Pending first descending
     if (tb.pending !== ta.pending) return tb.pending - ta.pending;
-    // Then In progress descending
     if (tb.progress !== ta.progress) return tb.progress - ta.progress;
-    // Then total descending
     const aTotal = ta.progress + ta.pending + ta.done;
     const bTotal = tb.progress + tb.pending + tb.done;
     return bTotal - aTotal;
