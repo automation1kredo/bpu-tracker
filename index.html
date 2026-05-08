@@ -248,7 +248,7 @@
 </div>
 
 <script>
-const SHEET_ID = '1cpKQF8RrCrVPv88HymQiZoxlMSLu_H52sz5L2AJQFJU';
+const SHEET_ID = '19oBj46ZiiMK4eGo0VjpOdvJH9RUQRZHGhVHTUgSh8MI';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
 const PAGE_SIZE = 25;
 
@@ -533,11 +533,13 @@ function drillPerson(name) {
   const sel = document.getElementById('personFilter');
   sel.value = name;
   document.getElementById('backBtn').style.display = 'inline-block';
+  document.getElementById('backBtn').setAttribute('data-from', 'person');
   document.getElementById('personFilter').style.display = 'none';
   currentPage = 1;
   applyFilters();
   window.scrollTo(0, 0);
 }
+
 function clearPersonFilter() {
   const sel = document.getElementById('personFilter');
   sel.value = 'all';
@@ -547,7 +549,12 @@ function clearPersonFilter() {
   document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
   document.getElementById('card-all').classList.add('active');
   currentPage = 1;
-  applyFilters();
+  const fromView = document.getElementById('backBtn').getAttribute('data-from');
+  if (fromView === 'person') {
+    switchView(2);
+  } else {
+    applyFilters();
+  }
 }
 
 let personPage = 1;
@@ -646,7 +653,7 @@ function switchView(n) {
 }
 
 loadData();
-setInterval(loadData, 5 * 60 * 1000);
+setInterval(loadData, 30 * 60 * 1000);
 </script>
 </body>
 </html>
