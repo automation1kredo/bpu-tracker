@@ -73,7 +73,7 @@
   .badge-medium { background: var(--navy-light); color: var(--navy-mid); border-color: var(--border); }
   .badge-low { background: var(--navy-pale); color: var(--text-muted); border-color: var(--border); }
 
-  /* NEW: Date and Email column styling */
+  /* Date and Email styling */
   .col-date { 
     text-align: center; 
     background-color: #f8f9fa;
@@ -97,31 +97,6 @@
   .page-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
   .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* Person grid / cards */
-  .person-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .person-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.15s; }
-  .person-card:hover { border-color: var(--navy); }
-  .pc-head { padding: 12px 14px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--navy-pale); }
-  .pc-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
-  .pc-name { font-size: 13px; font-weight: 700; color: var(--navy); }
-  .pc-total { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-  .pc-stats { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--navy-pale); }
-  .pc-stat { text-align: center; padding: 8px 4px; }
-  .pc-num { font-size: 18px; font-weight: 700; color: var(--navy); }
-  .pc-lbl { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
-  .pc-bar-row { padding: 8px 12px 4px; display: flex; align-items: center; gap: 8px; }
-  .bar-track { flex: 1; height: 4px; background: var(--navy-light); border-radius: 2px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 2px; background: var(--navy); }
-  .bar-pct { font-size: 11px; color: var(--text-muted); min-width: 30px; text-align: right; }
-  .pc-tasks { padding: 6px 12px 10px; }
-  .pc-task-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--navy-pale); font-size: 12px; gap: 6px; }
-  .pc-task-row:last-child { border-bottom: none; }
-  .pc-task-name { color: var(--text-light); flex: 1; line-height: 1.4; }
-  .more-tasks { font-size: 11px; color: var(--text-muted); text-align: center; padding-top: 4px; }
-
-  /* Person view two-column list */
-  .person-table table thead th { background: var(--navy); color: #fff; }
-
   /* Status/error */
   .status-bar { text-align: center; font-size: 12px; color: var(--text-muted); padding: 10px 0 4px; }
   .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--navy-light); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
@@ -131,10 +106,8 @@
 
   @media(max-width: 768px) {
     .summary-grid { grid-template-columns: 1fr 1fr; }
-    .person-grid { grid-template-columns: 1fr 1fr; }
   }
   @media(max-width: 480px) {
-    .person-grid { grid-template-columns: 1fr; }
     .hide-mobile { display: none; }
     tbody td { padding: 10px 8px; font-size: 12px; }
     thead th { padding: 8px; font-size: 11px; }
@@ -180,7 +153,7 @@
 
   <div class="view-tabs">
     <button class="vtab active" id="vtab1" onclick="switchView(1)">Task view</button>
-    <button class="vtab" id="vtab2" onclick="switchView(2)">Person view</button>
+    <button class="vtab" id="vtab2" onclick="switchView(2)">Statistics</button>
   </div>
 
   <!-- Task view -->
@@ -207,12 +180,11 @@
             <th style="width:110px;">Status</th>
             <th style="width:100px;">Date</th>
             <th class="hide-mobile" style="width:200px;">Sender Email</th>
-            <th class="hide-mobile" style="width:80px;">Source</th>
             <th class="hide-mobile" style="width:90px;">Priority</th>
           </tr>
         </thead>
         <tbody id="taskBody">
-          <tr><td colspan="9" class="empty-row">Loading tasks...</td></tr>
+          <tr><td colspan="8" class="empty-row">Loading tasks...</td></tr>
         </tbody>
       </table>
       <div class="pagination" id="pagination" style="display:none;">
@@ -222,39 +194,31 @@
     </div>
   </div>
 
-  <!-- Person view — two column list with pagination -->
-  <div id="personView" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="filter-info" id="personPageInfo">Showing all people</div>
-      <div class="page-btns" id="personPageBtns"></div>
-    </div>
-    <div id="personListWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+  <!-- Statistics view -->
+  <div id="statsView" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
       <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:32px;">#</th>
-              <th>Name</th>
-              <th style="width:80px;text-align:center;">Pending</th>
-              <th style="width:80px;text-align:center;">In prog</th>
-              <th style="width:80px;text-align:center;">Done</th>
-            </tr>
-          </thead>
-          <tbody id="personCol1"></tbody>
+        <div style="padding:14px;border-bottom:1px solid #e0e0e0;font-weight:700;color:#0a1f5c;">By Status</div>
+        <table style="font-size:13px;">
+          <tbody id="statsByStatus">
+            <tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">Loading...</td></tr>
+          </tbody>
         </table>
       </div>
       <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:32px;">#</th>
-              <th>Name</th>
-              <th style="width:80px;text-align:center;">Pending</th>
-              <th style="width:80px;text-align:center;">In prog</th>
-              <th style="width:80px;text-align:center;">Done</th>
-            </tr>
-          </thead>
-          <tbody id="personCol2"></tbody>
+        <div style="padding:14px;border-bottom:1px solid #e0e0e0;font-weight:700;color:#0a1f5c;">By Priority</div>
+        <table style="font-size:13px;">
+          <tbody id="statsByPriority">
+            <tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <div style="padding:14px;border-bottom:1px solid #e0e0e0;font-weight:700;color:#0a1f5c;">Top Handlers</div>
+        <table style="font-size:13px;">
+          <tbody id="topHandlers">
+            <tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">Loading...</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -265,7 +229,8 @@
 </div>
 
 <script>
-const SHEET_ID = '19oBj46ZiiMK4eGo0VjpOdvJH9RUQRZHGhVHTUgSh8MI';
+// ===== UPDATED SHEET CONFIG =====
+const SHEET_ID = '1QPtGD4nRLDAUl1PTzdbo_gBiK2nFhJMtl4CBsOgE0do';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
 const PAGE_SIZE = 25;
 
@@ -295,10 +260,6 @@ function normalizeStatus(s) {
   return 'Pending';
 }
 
-function getInitials(name) {
-  return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-}
-
 async function loadData() {
   document.getElementById('statusArea').innerHTML = `<div class="status-bar"><span class="spinner"></span>Loading latest data...</div>`;
   document.getElementById('liveBadge').textContent = 'Loading';
@@ -308,24 +269,35 @@ async function loadData() {
     const text = await res.text();
     const rows = parseCSV(text);
 
-    if (rows.length < 2) { showError('No tasks found in sheet yet.'); return; }
+    if (rows.length < 2) { 
+      showError('No tasks found in sheet yet.'); 
+      return; 
+    }
+
+    // ===== UPDATED COLUMN MAPPING =====
+    // Expected columns from Google Sheet:
+    // A: Task (0)
+    // B: Assigned To (1)
+    // C: Assigned By (2)
+    // D: Sender Email ID (3)
+    // E: Date (4)
+    // F: Status (5)
+    // G: Priority (6)
 
     allTasks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
-      task:         (r[0]||'').trim(),
-      assigned_to:  (r[1]||'').trim(),
-      assigned_by:  (r[2]||'').trim(),
-      status:       normalizeStatus(r[3]),
-      deadline:     (r[4]||'—').trim(),
-      priority:     (r[5]||'Medium').trim(),
-      source:       (r[6]||'').trim(),
-      updated:      (r[7]||'').trim(),
-      date:         (r[8]||'').trim(),           // NEW: Column I
-      sender_email: (r[9]||'').trim()            // NEW: Column J
+      task:         (r[0]||'').trim(),           // Column A
+      assigned_to:  (r[1]||'').trim(),           // Column B
+      assigned_by:  (r[2]||'').trim(),           // Column C
+      sender_email: (r[3]||'').trim(),           // Column D
+      date:         (r[4]||'—').trim(),          // Column E
+      status:       normalizeStatus(r[5]),       // Column F
+      priority:     (r[6]||'Medium').trim()      // Column G
     }));
 
     updateCounts();
     updatePersonFilter();
     applyFilters();
+    updateStats();
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',hour12:true}).toUpperCase();
@@ -333,7 +305,7 @@ async function loadData() {
     document.getElementById('lastUpdated').textContent = `Last refreshed: ${dateStr} ${timeStr}`;
     document.getElementById('liveBadge').textContent = 'Live';
     document.getElementById('statusArea').innerHTML = '';
-    document.getElementById('footerStatus').textContent = `${allTasks.length} tasks — auto-updates every 5 min`;
+    document.getElementById('footerStatus').textContent = `${allTasks.length} tasks — auto-updates every 30 min`;
 
   } catch(e) {
     showError('Could not load sheet. Make sure Google Sheet is shared as "Anyone with link can view". Error: ' + e.message);
@@ -386,6 +358,53 @@ function updatePersonFilter() {
   });
 }
 
+function updateStats() {
+  // Status breakdown
+  const statusCounts = {};
+  allTasks.forEach(t => {
+    statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
+  });
+  
+  let statusHTML = '';
+  Object.keys(statusCounts).sort().forEach(status => {
+    const count = statusCounts[status];
+    const pct = Math.round((count / allTasks.length) * 100);
+    statusHTML += `<tr><td style="padding:8px 12px;">${status}</td><td style="padding:8px 12px;text-align:right;font-weight:700;">${count} (${pct}%)</td></tr>`;
+  });
+  document.getElementById('statsByStatus').innerHTML = statusHTML || '<tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">No data</td></tr>';
+
+  // Priority breakdown
+  const priorityCounts = {};
+  allTasks.forEach(t => {
+    priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1;
+  });
+  
+  let priorityHTML = '';
+  ['High', 'Medium', 'Low'].forEach(priority => {
+    const count = priorityCounts[priority] || 0;
+    const pct = allTasks.length > 0 ? Math.round((count / allTasks.length) * 100) : 0;
+    priorityHTML += `<tr><td style="padding:8px 12px;">${priority}</td><td style="padding:8px 12px;text-align:right;font-weight:700;">${count} (${pct}%)</td></tr>`;
+  });
+  document.getElementById('statsByPriority').innerHTML = priorityHTML;
+
+  // Top handlers
+  const handlerCounts = {};
+  allTasks.forEach(t => {
+    if (t.assigned_to && t.assigned_to !== '—') {
+      handlerCounts[t.assigned_to] = (handlerCounts[t.assigned_to] || 0) + 1;
+    }
+  });
+  
+  let handlerHTML = '';
+  Object.entries(handlerCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .forEach(([handler, count]) => {
+      handlerHTML += `<tr><td style="padding:8px 12px;">${handler}</td><td style="padding:8px 12px;text-align:right;font-weight:700;">${count}</td></tr>`;
+    });
+  document.getElementById('topHandlers').innerHTML = handlerHTML || '<tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">No data</td></tr>';
+}
+
 function filterByCard(status) {
   activeStatus = status;
   document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
@@ -426,7 +445,7 @@ function renderTable() {
   const page = filteredTasks.slice(start, end);
 
   if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-row">No tasks match this filter</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-row">No tasks match this filter</td></tr>`;
     document.getElementById('pagination').style.display = 'none';
     return;
   }
@@ -447,7 +466,6 @@ function renderTable() {
     <td>${statusBadge(t.status)}</td>
     <td class="col-date">${t.date||'—'}</td>
     <td class="hide-mobile col-email" title="${t.sender_email}">${t.sender_email||'—'}</td>
-    <td class="hide-mobile" style="font-size:12px;"><span class="badge ${t.source==='Client'?'badge-progress':'badge-medium'}">${t.source||'—'}</span></td>
     <td class="hide-mobile">${priorityBadge(t.priority)}</td>
   </tr>`;
   }).join('');
@@ -487,80 +505,6 @@ function goPage(p) {
   window.scrollTo(0, 0);
 }
 
-function renderPersonView() {
-  const people = {};
-  allTasks.forEach(t => {
-    if (!t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '') return;
-    if (!people[t.assigned_to]) people[t.assigned_to] = { pending:0, progress:0, done:0, tasks:[] };
-    const p = people[t.assigned_to];
-    if (t.status==='Pending') p.pending++;
-    else if (t.status==='In progress') p.progress++;
-    else p.done++;
-    p.tasks.push(t);
-  });
-
-  const names = Object.keys(people).sort((a,b) => {
-    const ta = people[a], tb = people[b];
-    const aActive = ta.progress + ta.pending;
-    const bActive = tb.progress + tb.pending;
-    if (aActive === 0 && bActive > 0) return 1;
-    if (bActive === 0 && aActive > 0) return -1;
-    if (tb.pending !== ta.pending) return tb.pending - ta.pending;
-    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
-    const aTotal = ta.progress + ta.pending + ta.done;
-    const bTotal = tb.progress + tb.pending + tb.done;
-    return bTotal - aTotal;
-  });
-
-  const maxTotal = Math.max(...names.map(n => people[n].pending+people[n].progress+people[n].done));
-
-  document.getElementById('personCol1').innerHTML = names.slice(0,20).map((name) => {
-    const p = people[name];
-    const total = p.pending+p.progress+p.done;
-    const pct = Math.max(...names.map(n => people[n].pending+people[n].progress+people[n].done)) > 0
-      ? Math.round((total / Math.max(...names.map(n => people[n].pending+people[n].progress+people[n].done)))*100) : 0;
-    const shown = p.tasks.slice(0, 3);
-    const more = p.tasks.length - shown.length;
-    return `<div class="person-card" style="cursor:pointer;" onclick="drillPerson('${name.replace(/'/g,"\\'")}')">
-      <div class="pc-head">
-        <div class="pc-avatar">${getInitials(name)}</div>
-        <div><div class="pc-name">${name}</div><div class="pc-total">${total} task${total!==1?'s':''} — click to view</div></div>
-      </div>
-      <div class="pc-stats">
-        <div class="pc-stat"><div class="pc-num">${p.pending}</div><div class="pc-lbl">Pending</div></div>
-        <div class="pc-stat"><div class="pc-num">${p.progress}</div><div class="pc-lbl">In progress</div></div>
-        <div class="pc-stat"><div class="pc-num">${p.done}</div><div class="pc-lbl">Done</div></div>
-      </div>
-      <div class="pc-bar-row">
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
-        <div class="bar-pct">${pct}%</div>
-      </div>
-      <div class="pc-tasks">
-        ${shown.map(t => `<div class="pc-task-row">
-          <div class="pc-task-name">${t.task}</div>
-          ${statusBadge(t.status)}
-        </div>`).join('')}
-        ${more>0 ? `<div class="more-tasks">+${more} more</div>` : ''}
-      </div>
-    </div>`;
-  }).join('') || '<div style="padding:20px;color:#aaa;">No data</div>';
-}
-
-function drillPerson(name) {
-  switchView(1);
-  activeStatus = 'all';
-  document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
-  document.getElementById('card-all').classList.add('active');
-  const sel = document.getElementById('personFilter');
-  sel.value = name;
-  document.getElementById('backBtn').style.display = 'inline-block';
-  document.getElementById('backBtn').setAttribute('data-from', 'person');
-  document.getElementById('personFilter').style.display = 'none';
-  currentPage = 1;
-  applyFilters();
-  window.scrollTo(0, 0);
-}
-
 function clearPersonFilter() {
   const sel = document.getElementById('personFilter');
   sel.value = 'all';
@@ -570,105 +514,34 @@ function clearPersonFilter() {
   document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
   document.getElementById('card-all').classList.add('active');
   currentPage = 1;
-  const fromView = document.getElementById('backBtn').getAttribute('data-from');
-  if (fromView === 'person') {
-    switchView(2);
-  } else {
-    applyFilters();
-  }
-}
-
-let personPage = 1;
-const PERSON_PAGE_SIZE = 40; // 20 per column
-
-function renderSummaryView() {
-  const people = {};
-  allTasks.forEach(t => {
-    if (!t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '') return;
-    if (!people[t.assigned_to]) people[t.assigned_to] = { pending:0, progress:0, done:0 };
-    const p = people[t.assigned_to];
-    if (t.status==='Pending') p.pending++;
-    else if (t.status==='In progress') p.progress++;
-    else p.done++;
-  });
-
-  const names = Object.keys(people).sort((a,b) => {
-    const ta = people[a], tb = people[b];
-    const aActive = ta.progress + ta.pending;
-    const bActive = tb.progress + tb.pending;
-    if (aActive === 0 && bActive > 0) return 1;
-    if (bActive === 0 && aActive > 0) return -1;
-    if (tb.pending !== ta.pending) return tb.pending - ta.pending;
-    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
-    const aTotal = ta.progress + ta.pending + ta.done;
-    const bTotal = tb.progress + tb.pending + tb.done;
-    return bTotal - aTotal;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(names.length / PERSON_PAGE_SIZE));
-  if (personPage > totalPages) personPage = totalPages;
-  const start = (personPage - 1) * PERSON_PAGE_SIZE;
-  const pageNames = names.slice(start, start + PERSON_PAGE_SIZE);
-
-  function makeRow(name, i) {
-    const p = people[name];
-    return `<tr style="cursor:pointer;" onclick="drillPerson('${name.replace(/'/g,"\\'")}')">
-      <td style="color:#8a96b8;font-size:12px;">${i+1}</td>
-      <td style="font-weight:600;color:#0a1f5c;font-size:13px;">${name}</td>
-      <td style="text-align:center;font-weight:700;color:${p.pending>0?'#0a1f5c':'#c8d0e8'};">${p.pending}</td>
-      <td style="text-align:center;font-weight:700;color:${p.progress>0?'#0a1f5c':'#c8d0e8'};">${p.progress}</td>
-      <td style="text-align:center;font-weight:700;color:${p.done>0?'#1a6e3c':'#c8d0e8'};">${p.done}</td>
-    </tr>`;
-  }
-
-  const mid = Math.ceil(pageNames.length / 2);
-  const col1 = pageNames.slice(0, mid);
-  const col2 = pageNames.slice(mid);
-
-  document.getElementById('personCol1').innerHTML = col1.length
-    ? col1.map((n,i) => makeRow(n, start+i)).join('')
-    : `<tr><td colspan="5" class="empty-row">No data</td></tr>`;
-
-  document.getElementById('personCol2').innerHTML = col2.length
-    ? col2.map((n,i) => makeRow(n, start+i+mid)).join('')
-    : `<tr><td colspan="5" style="padding:12px;color:#ddd;text-align:center;">—</td></tr>`;
-
-  // Pagination controls
-  const startNum = start + 1;
-  const endNum = Math.min(start + PERSON_PAGE_SIZE, names.length);
-  document.getElementById('personPageInfo').textContent =
-    `Showing ${startNum}–${endNum} of ${names.length} people`;
-
-  if (totalPages > 1) {
-    let html = `<button class="page-btn" onclick="goPersonPage(${personPage-1})" ${personPage===1?'disabled':''}>&#8592;</button>`;
-    for (let p = 1; p <= totalPages; p++) {
-      html += `<button class="page-btn ${p===personPage?'active':''}" onclick="goPersonPage(${p})">${p}</button>`;
-    }
-    html += `<button class="page-btn" onclick="goPersonPage(${personPage+1})" ${personPage===totalPages?'disabled':''}>&#8594;</button>`;
-    document.getElementById('personPageBtns').innerHTML = html;
-  } else {
-    document.getElementById('personPageBtns').innerHTML = '';
-  }
-}
-
-function goPersonPage(p) {
-  const people = {};
-  allTasks.forEach(t => { if (!people[t.assigned_to]) people[t.assigned_to] = {}; });
-  const totalPages = Math.max(1, Math.ceil(Object.keys(people).length / PERSON_PAGE_SIZE));
-  if (p < 1 || p > totalPages) return;
-  personPage = p;
-  renderSummaryView();
-  window.scrollTo(0, 0);
+  applyFilters();
 }
 
 function switchView(n) {
   document.getElementById('taskView').style.display   = n===1 ? 'block' : 'none';
-  document.getElementById('personView').style.display = n===2 ? 'block' : 'none';
+  document.getElementById('statsView').style.display  = n===2 ? 'block' : 'none';
   document.getElementById('vtab1').className = 'vtab' + (n===1?' active':'');
   document.getElementById('vtab2').className = 'vtab' + (n===2?' active':'');
-  if (n===2) renderSummaryView();
+  
+  // Reset filters when switching to Task view
+  if (n===1) {
+    const sel = document.getElementById('personFilter');
+    if (sel) {
+      sel.value = 'all';
+      document.getElementById('backBtn').style.display = 'none';
+      document.getElementById('personFilter').style.display = 'inline-block';
+      activeStatus = 'all';
+      document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
+      document.getElementById('card-all').classList.add('active');
+      currentPage = 1;
+      applyFilters();
+    }
+  }
+  
+  if (n===2) updateStats();
 }
 
+// Load data on startup and refresh every 30 minutes
 loadData();
 setInterval(loadData, 30 * 60 * 1000);
 </script>
