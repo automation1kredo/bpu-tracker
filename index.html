@@ -153,7 +153,7 @@
 
   <div class="view-tabs">
     <button class="vtab active" id="vtab1" onclick="switchView(1)">Task view</button>
-    <button class="vtab" id="vtab2" onclick="switchView(2)">Statistics</button>
+    <button class="vtab" id="vtab2" onclick="switchView(2)">Person view</button>
   </div>
 
   <!-- Task view -->
@@ -194,31 +194,39 @@
     </div>
   </div>
 
-  <!-- Statistics view -->
-  <div id="statsView" style="display:none;">
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+  <!-- Person view — two column list with pagination -->
+  <div id="personView" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div class="filter-info" id="personPageInfo">Showing all people</div>
+      <div class="page-btns" id="personPageBtns"></div>
+    </div>
+    <div id="personListWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div class="table-wrap">
-        <div style="padding:14px;border-bottom:1px solid #e0e0e0;font-weight:700;color:#0a1f5c;">By Status</div>
-        <table style="font-size:13px;">
-          <tbody id="statsByStatus">
-            <tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">Loading...</td></tr>
-          </tbody>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px;">#</th>
+              <th>Name</th>
+              <th style="width:80px;text-align:center;">Pending</th>
+              <th style="width:80px;text-align:center;">In prog</th>
+              <th style="width:80px;text-align:center;">Done</th>
+            </tr>
+          </thead>
+          <tbody id="personCol1"></tbody>
         </table>
       </div>
       <div class="table-wrap">
-        <div style="padding:14px;border-bottom:1px solid #e0e0e0;font-weight:700;color:#0a1f5c;">By Priority</div>
-        <table style="font-size:13px;">
-          <tbody id="statsByPriority">
-            <tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="table-wrap">
-        <div style="padding:14px;border-bottom:1px solid #e0e0e0;font-weight:700;color:#0a1f5c;">Top Handlers</div>
-        <table style="font-size:13px;">
-          <tbody id="topHandlers">
-            <tr><td colspan="2" style="padding:10px;text-align:center;color:#aaa;">Loading...</td></tr>
-          </tbody>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px;">#</th>
+              <th>Name</th>
+              <th style="width:80px;text-align:center;">Pending</th>
+              <th style="width:80px;text-align:center;">In prog</th>
+              <th style="width:80px;text-align:center;">Done</th>
+            </tr>
+          </thead>
+          <tbody id="personCol2"></tbody>
         </table>
       </div>
     </div>
@@ -514,12 +522,114 @@ function clearPersonFilter() {
   document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
   document.getElementById('card-all').classList.add('active');
   currentPage = 1;
-  applyFilters();
+  
+  const fromView = document.getElementById('backBtn').getAttribute('data-from');
+  if (fromView === 'person') {
+    switchView(2);  // Go back to Person view
+  } else {
+    applyFilters();
+  }
 }
 
+let personPage = 1;
+const PERSON_PAGE_SIZE = 40; // 20 per column
+
+function renderSummaryView() {
+  const people = {};
+  allTasks.forEach(t => {
+    if (!t.assigned_to || t.assigned_to === '—' || t.assigned_to === '-' || t.assigned_to.trim() === '') return;
+    if (!people[t.assigned_to]) people[t.assigned_to] = { pending:0, progress:0, done:0 };
+    const p = people[t.assigned_to];
+    if (t.status==='Pending') p.pending++;
+    else if (t.status==='In progress') p.progress++;
+    else p.done++;
+  });
+
+  const names = Object.keys(people).sort((a,b) => {
+    const ta = people[a], tb = people[b];
+    const aActive = ta.progress + ta.pending;
+    const bActive = tb.progress + tb.pending;
+    if (aActive === 0 && bActive > 0) return 1;
+    if (bActive === 0 && aActive > 0) return -1;
+    if (tb.pending !== ta.pending) return tb.pending - ta.pending;
+    if (tb.progress !== ta.progress) return tb.progress - ta.progress;
+    const aTotal = ta.progress + ta.pending + ta.done;
+    const bTotal = tb.progress + tb.pending + tb.done;
+    return bTotal - aTotal;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(names.length / PERSON_PAGE_SIZE));
+  if (personPage > totalPages) personPage = totalPages;
+  const start = (personPage - 1) * PERSON_PAGE_SIZE;
+  const pageNames = names.slice(start, start + PERSON_PAGE_SIZE);
+
+  function makeRow(name, i) {
+    const p = people[name];
+    return `<tr style="cursor:pointer;" onclick="drillPerson('${name.replace(/'/g,"\\'")}')">
+      <td style="color:#8a96b8;font-size:12px;">${i+1}</td>
+      <td style="font-weight:600;color:#0a1f5c;font-size:13px;">${name}</td>
+      <td style="text-align:center;font-weight:700;color:${p.pending>0?'#0a1f5c':'#c8d0e8'};">${p.pending}</td>
+      <td style="text-align:center;font-weight:700;color:${p.progress>0?'#0a1f5c':'#c8d0e8'};">${p.progress}</td>
+      <td style="text-align:center;font-weight:700;color:${p.done>0?'#1a6e3c':'#c8d0e8'};">${p.done}</td>
+    </tr>`;
+  }
+
+  const mid = Math.ceil(pageNames.length / 2);
+  const col1 = pageNames.slice(0, mid);
+  const col2 = pageNames.slice(mid);
+
+  document.getElementById('personCol1').innerHTML = col1.length
+    ? col1.map((n,i) => makeRow(n, start+i)).join('')
+    : `<tr><td colspan="5" class="empty-row">No data</td></tr>`;
+
+  document.getElementById('personCol2').innerHTML = col2.length
+    ? col2.map((n,i) => makeRow(n, start+i+mid)).join('')
+    : `<tr><td colspan="5" style="padding:12px;color:#ddd;text-align:center;">—</td></tr>`;
+
+  const startNum = start + 1;
+  const endNum = Math.min(start + PERSON_PAGE_SIZE, names.length);
+  document.getElementById('personPageInfo').textContent =
+    `Showing ${startNum}–${endNum} of ${names.length} people`;
+
+  if (totalPages > 1) {
+    let html = `<button class="page-btn" onclick="goPersonPage(${personPage-1})" ${personPage===1?'disabled':''}>&#8592;</button>`;
+    for (let p = 1; p <= totalPages; p++) {
+      html += `<button class="page-btn ${p===personPage?'active':''}" onclick="goPersonPage(${p})">${p}</button>`;
+    }
+    html += `<button class="page-btn" onclick="goPersonPage(${personPage+1})" ${personPage===totalPages?'disabled':''}>&#8594;</button>`;
+    document.getElementById('personPageBtns').innerHTML = html;
+  } else {
+    document.getElementById('personPageBtns').innerHTML = '';
+  }
+}
+
+function goPersonPage(p) {
+  const people = {};
+  allTasks.forEach(t => { if (!people[t.assigned_to]) people[t.assigned_to] = {}; });
+  const totalPages = Math.max(1, Math.ceil(Object.keys(people).length / PERSON_PAGE_SIZE));
+  if (p < 1 || p > totalPages) return;
+  personPage = p;
+  renderSummaryView();
+  window.scrollTo(0, 0);
+}
+
+function drillPerson(name) {
+  switchView(1);
+  activeStatus = 'all';
+  document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('card-all').classList.add('active');
+  const sel = document.getElementById('personFilter');
+  sel.value = name;
+  document.getElementById('backBtn').style.display = 'inline-block';
+  document.getElementById('backBtn').setAttribute('data-from', 'person');
+  document.getElementById('personFilter').style.display = 'none';
+  currentPage = 1;
+  applyFilters();
+  window.scrollTo(0, 0);
+}
 function switchView(n) {
   document.getElementById('taskView').style.display   = n===1 ? 'block' : 'none';
-  document.getElementById('statsView').style.display  = n===2 ? 'block' : 'none';
+  document.getElementById('personView').style.display = n===2 ? 'block' : 'none';
   document.getElementById('vtab1').className = 'vtab' + (n===1?' active':'');
   document.getElementById('vtab2').className = 'vtab' + (n===2?' active':'');
   
@@ -538,7 +648,7 @@ function switchView(n) {
     }
   }
   
-  if (n===2) updateStats();
+  if (n===2) renderSummaryView();
 }
 
 // Load data on startup and refresh every 30 minutes
